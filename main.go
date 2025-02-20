@@ -1,25 +1,39 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	config "github.com/DNelson35/gator/internal/config"
+	"github.com/DNelson35/gator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 type state struct {
+	db *database.Queries
 	pconfig *config.Config
 }
 
 func main () {
 	var s state
+
 	cfg := config.Read()
 	s.pconfig = &cfg
+
+	db, err := sql.Open("postgres", s.pconfig.DbUrl)
+
+	if err != nil {
+		fmt.Printf("%e", err)
+	}
+
+	s.db = database.New(db)
 
 	var c commands
 	c.cmds = make(map[string]func(*state, command) error)
 
-	c.register("login",handlerLogin)
+	c.register("login", handlerLogin)
+	c.register("register", handlerRegister)
 
 	args := os.Args
 
@@ -33,7 +47,7 @@ func main () {
 		args: args[2:],
 	}
 
-	err := c.run(&s, com)
+	err = c.run(&s, com)
 
 	if err != nil {
 		fmt.Println(err)
