@@ -59,3 +59,23 @@ func handlerReset(s *state, cmd command) error {
 	}
 	return nil
 }
+
+func handlerGetUsers(s *state, cmd command) error {
+	if len(cmd.args) > 0 {
+		return fmt.Errorf("this command takes no arguments")
+	}
+
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		if user.Name == s.pconfig.CurrentUserName {
+			fmt.Printf("%v (current)\n", user.Name)
+			continue
+		}
+		fmt.Println(user.Name)
+	}
+	return nil
+}
