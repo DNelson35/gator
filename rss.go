@@ -89,8 +89,33 @@ func handlerAddFeed(s *state, cmd command) error{
 	if err != nil {
 		return err
 	}
-	fmt.Printf(feed.Name)
-	fmt.Println(feed.Url)
-	
+	printFeed(feed)
+
 	return nil
+}
+
+func handlerFeeds(s *state, cmd command) error {
+	if len(cmd.args) > 0 {
+		return fmt.Errorf("command takes no arguments")
+	}
+	feeds, err := s.db.GetFeedsWithUser(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, feed := range feeds {
+		fmt.Println(feed.Name)
+		fmt.Println(feed.Url)
+		fmt.Println(feed.UserName)
+	}
+	return nil
+}
+
+func printFeed(feed database.Feed){
+	fmt.Println(feed.ID)
+	fmt.Println(feed.Name)
+	fmt.Println(feed.Url)
+	fmt.Println(feed.UserID)
+	fmt.Println(feed.CreatedAt)
+	fmt.Println(feed.UpdatedAt)
 }
