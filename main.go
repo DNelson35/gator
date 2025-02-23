@@ -34,6 +34,7 @@ func main () {
 
 	c.register("login", handlerLogin)
 	c.register("register", handlerRegister)
+	c.register("reset", handlerReset)
 
 	args := os.Args
 
@@ -55,6 +56,6 @@ func main () {
 	}
 	
 	cfg = config.Read()
-	fmt.Println(cfg.CurrentUserName)
+	// fmt.Println(cfg.CurrentUserName)
 	os.Exit(0)
 }
