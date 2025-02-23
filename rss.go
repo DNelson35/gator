@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"encoding/xml"
+	"fmt"
 	"html"
 	"io"
 	"net/http"
-	"fmt"
+	"time"
+
+	"github.com/DNelson35/gator/internal/database"
+	"github.com/google/uuid"
 )
 
 type RSSFeed struct {
@@ -62,4 +66,31 @@ func fetchFeed(ctx context.Context, feedUrl string) (*RSSFeed, error){
 
 
 	return &rss, nil
+}
+
+func handlerAddFeed(s *state, cmd command) error{
+	if len(cmd.args) < 2 {
+		return fmt.Errorf("please provide a name and url")
+	}
+	user, err := s.db.GetUser(context.Background(), s.pconfig.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
+	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
+		ID: uuid.New(),
+		Name: cmd.args[0],
+		Url: cmd.args[1],
+		UserID: user.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+
+	if err != nil {
+		return err
+	}
+	fmt.Printf(feed.Name)
+	fmt.Println(feed.Url)
+	
+	return nil
 }

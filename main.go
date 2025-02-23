@@ -37,6 +37,7 @@ func main () {
 	c.register("reset", handlerReset)
 	c.register("users", handlerGetUsers)
 	c.register("agg", handleAgg)
+	c.register("addfeed", handlerAddFeed)
 
 	args := os.Args
 
