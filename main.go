@@ -36,6 +36,7 @@ func main () {
 	c.register("register", handlerRegister)
 	c.register("reset", handlerReset)
 	c.register("users", handlerGetUsers)
+	c.register("agg", handleAgg)
 
 	args := os.Args
 
