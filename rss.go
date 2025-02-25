@@ -68,14 +68,14 @@ func fetchFeed(ctx context.Context, feedUrl string) (*RSSFeed, error){
 	return &rss, nil
 }
 
-func handlerAddFeed(s *state, cmd command) error{
+func handlerAddFeed(s *state, cmd command, user database.User) error{
 	if len(cmd.args) < 2 {
 		return fmt.Errorf("please provide a name and url")
 	}
-	user, err := s.db.GetUser(context.Background(), s.pconfig.CurrentUserName)
-	if err != nil {
-		return err
-	}
+	// user, err := s.db.GetUser(context.Background(), s.pconfig.CurrentUserName)
+	// if err != nil {
+	// 	return err
+	// }
 
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
 		ID: uuid.New(),
@@ -123,14 +123,14 @@ func handlerFeeds(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollow(s *state, cmd command) error {
+func handlerFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.args) > 1 {
 		return fmt.Errorf("command takes one argument: url")
 	}
-	user , err := s.db.GetUser(context.Background(), s.pconfig.CurrentUserName)
-	if err != nil {
-		return err
-	}
+	// user , err := s.db.GetUser(context.Background(), s.pconfig.CurrentUserName)
+	// if err != nil {
+	// 	return err
+	// }
 	feed , err := s.db.GetFeedByUrl(context.Background(), cmd.args[0])
 	if err != nil {
 		return err
@@ -151,14 +151,14 @@ func handlerFollow(s *state, cmd command) error {
 	return nil
 }
 
-func handlerFollowing(s *state, cmd command) error {
+func handlerFollowing(s *state, cmd command, user database.User) error {
 	if len(cmd.args) > 0 {
 		return fmt.Errorf("command takes no arguments")
 	}
-	user, err := s.db.GetUser(context.Background(), s.pconfig.CurrentUserName)
-	if err != nil {
-		return err
-	}
+	// user, err := s.db.GetUser(context.Background(), s.pconfig.CurrentUserName)
+	// if err != nil {
+	// 	return err
+	// }
 	followedFeeds, err := s.db.GetFeedFollowsForUser(context.Background(), user.ID)
 	if err != nil {
 		return err
