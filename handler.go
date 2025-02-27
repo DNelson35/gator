@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/DNelson35/gator/internal/database"
@@ -80,13 +82,77 @@ func handlerGetUsers(s *state, cmd command) error {
 	return nil
 }
 
-func handleAgg(_ *state, _ command) error {
-	rss, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+func handleAgg(s *state, cmd command) error {
+	if len(cmd.args) < 1 {
+		return fmt.Errorf("command should take a duration as an argument")
+	}
+	fmt.Printf("Collecting feeds every %v\n", cmd.args[0])
 
+	timeBtwReq, err := time.ParseDuration(cmd.args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(*rss)
+	ticker := time.NewTicker(timeBtwReq)
+	for ; ; <-ticker.C{
+		err = scrapeFeeds(s)
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func scrapeFeeds(s *state)error{
+	nextFeed, err := s.db.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		return err
+	}
+	updatedfeed, err := s.db.MarkFeedFetched(context.Background(), database.MarkFeedFetchedParams{
+		LastFetchedAt: sql.NullTime{Time: time.Now(), Valid: true},
+		UpdatedAt: time.Now(),
+		ID: nextFeed.ID,
+	})
+	if err != nil {
+		return err
+	}
+
+	feed, err := fetchFeed(context.Background(), updatedfeed.Url)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(feed.Channel.Title)
+	for _, item := range feed.Channel.Items {
+		pubTime := sql.NullTime{}
+		if t, err := time.Parse(time.RFC1123Z, item.PubDate); err == nil {
+			pubTime = sql.NullTime{
+				Time:  t,
+				Valid: true,
+			}
+		}
+
+		_, err = s.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID: uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			Title: item.Title,
+			Url: item.Link,
+			Description: sql.NullString{
+				String: item.Description,
+				Valid: true,
+			},
+			PublishedAt: pubTime,
+			FeedID: updatedfeed.ID,
+		})
+
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				continue
+			}
+			fmt.Println(err)
+			continue
+		}
+	}
+	fmt.Printf("Feed %s collected, %v posts found\n", feed.Channel.Title, len(feed.Channel.Items))
 	return nil
 }
